@@ -2,6 +2,8 @@
 
 Mini-SaaS de enquetes ao vivo, feito para a demonstração do seminário sobre **SaaS (Software como Serviço)**.
 
+**No ar:** https://enquetenuvem.onrender.com · Material do seminário (slides, roteiro e vídeo) na pasta [`seminario/`](seminario/).
+
 Um único sistema, rodando numa única instância na nuvem, atende vários clientes (multi-tenant). Cada cliente tem seu espaço em `/t/<nome-do-espaco>` e só enxerga os próprios dados.
 
 ## Rodar no computador

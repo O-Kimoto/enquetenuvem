@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnqueteNuvem — enquetes ao vivo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f54eb'/%3E%3Crect x='8' y='16' width='4' height='8' rx='1' fill='white'/%3E%3Crect x='14' y='10' width='4' height='14' rx='1' fill='white'/%3E%3Crect x='20' y='13' width='4' height='11' rx='1' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="/">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2f54eb"/><rect x="8" y="16" width="4" height="8" rx="1" fill="#fff"/><rect x="14" y="10" width="4" height="14" rx="1" fill="#fff"/><rect x="20" y="13" width="4" height="11" rx="1" fill="#fff"/></svg>
+      EnqueteNuvem
+    </a>
+    <span class="selo">Software como Serviço</span>
+  </header>
+
+  <main class="conteudo">
+    <h1>Enquetes ao vivo para qualquer empresa.<br>Sem instalar nada.</h1>
+    <p class="lead">Crie o espaço da sua empresa em segundos, compartilhe o QR code e veja os votos chegando em tempo real — tudo pelo navegador.</p>
+
+    <div class="grade">
+      <section class="cartao">
+        <h2>Criar o espaço da sua empresa</h2>
+        <form id="form">
+          <label for="nome">Nome da empresa ou turma</label>
+          <input id="nome" required maxlength="60" placeholder="Ex.: Turma de Computação em Nuvem">
+
+          <label for="pergunta">Pergunta da enquete</label>
+          <input id="pergunta" required maxlength="140" placeholder="Ex.: Qual modelo de nuvem vocês preferem?">
+
+          <label for="opcoes">Opções (uma por linha, de 2 a 6)</label>
+          <textarea id="opcoes" required placeholder="IaaS&#10;PaaS&#10;SaaS"></textarea>
+
+          <p class="erro" id="erro"></p>
+          <button class="botao" type="submit">Criar meu espaço grátis</button>
+        </form>
+      </section>
+
+      <aside>
+        <section class="cartao">
+          <h2>Clientes de exemplo</h2>
+          <p class="nota" style="margin-top:-8px">Dois clientes diferentes, no mesmo sistema. Os dados de um não aparecem para o outro.</p>
+          <p><a class="botao secundario" href="/t/nova-roma/painel">Faculdade Nova Roma →</a></p>
+          <p><a class="botao secundario" href="/t/padaria-do-ze/painel">Padaria do Zé →</a></p>
+        </section>
+
+        <div class="planos">
+          <section class="cartao plano">
+            <h3>Grátis</h3>
+            <div class="preco">R$ 0</div>
+            <ul><li>Até 200 votos por enquete</li><li>QR code e resultados ao vivo</li></ul>
+          </section>
+          <section class="cartao plano pro">
+            <h3>Pro</h3>
+            <div class="preco">R$ 29/mês</div>
+            <ul><li>Votos ilimitados</li><li>Exportar resultados</li></ul>
+          </section>
+        </div>
+        <p class="nota">Planos fictícios, só para ilustrar o modelo de assinatura do SaaS.</p>
+      </aside>
+    </div>
+
+    <div class="status" id="status"></div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const form = document.getElementById('form');
+    const erro = document.getElementById('erro');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      erro.textContent = '';
+      const corpo = {
+        nome: document.getElementById('nome').value,
+        pergunta: document.getElementById('pergunta').value,
+        opcoes: document.getElementById('opcoes').value.split('\n'),
+      };
+      try {
+        const r = await fetch('/api/espacos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        });
+        const dados = await r.json();
+        if (!r.ok) { erro.textContent = dados.erro || 'Não foi possível criar.'; return; }
+        location.href = `/t/${dados.slug}/painel`;
+      } catch {
+        erro.textContent = 'Sem conexão com o servidor.';
+      }
+    });
+
+    desenharStatus(document.getElementById('status'));
+  </script>
+</body>
+</html>

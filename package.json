@@ -1,0 +1,13 @@
+{
+  "name": "enquetenuvem",
+  "version": "1.0.0",
+  "description": "Mini-SaaS multi-inquilino de enquetes ao vivo — demo do seminário de Computação em Nuvem",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

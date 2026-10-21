@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel — EnqueteNuvem</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f54eb'/%3E%3Crect x='8' y='16' width='4' height='8' rx='1' fill='white'/%3E%3Crect x='14' y='10' width='4' height='14' rx='1' fill='white'/%3E%3Crect x='20' y='13' width='4' height='11' rx='1' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/estilo.css">
+  <style>
+    .conteudo { max-width: 1180px; }
+    #pergunta { font-size: clamp(26px, 3.4vw, 38px); line-height: 1.15; margin-bottom: 8px; }
+    #barras .barra-topo { font-size: 20px; }
+    #barras .barra-fundo { height: 22px; }
+  </style>
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="/">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2f54eb"/><rect x="8" y="16" width="4" height="8" rx="1" fill="#fff"/><rect x="14" y="10" width="4" height="14" rx="1" fill="#fff"/><rect x="20" y="13" width="4" height="11" rx="1" fill="#fff"/></svg>
+      EnqueteNuvem
+    </a>
+    <span class="selo" id="cliente">…</span>
+  </header>
+
+  <main class="conteudo">
+    <div class="grade">
+      <section class="cartao">
+        <p class="nota" style="margin:0 0 6px">Painel do cliente · plano <b id="plano">Grátis</b></p>
+        <h1 id="pergunta">Carregando…</h1>
+        <div id="barras"></div>
+        <p class="total" id="total"></p>
+      </section>
+
+      <section class="cartao qr">
+        <h2 style="margin:0">Aponte a câmera e vote</h2>
+        <div id="qrcode"></div>
+        <div class="link-curto" id="link"></div>
+        <a class="botao secundario" id="abrir" target="_blank" rel="noopener">Abrir página de votação</a>
+      </section>
+    </div>
+
+    <div class="status" id="status"></div>
+  </main>
+
+  <script src="/qrcode.js"></script>
+  <script src="/app.js"></script>
+  <script>
+    const slug = slugDaUrl();
+    const linkVoto = `${location.origin}/t/${slug}`;
+
+    document.getElementById('link').textContent = linkVoto.replace(/^https?:\/\//, '');
+    document.getElementById('abrir').href = linkVoto;
+
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(linkVoto);
+      qr.make();
+      document.getElementById('qrcode').innerHTML = qr.createSvgTag({ cellSize: 7, margin: 2, scalable: false });
+    } catch { document.getElementById('qrcode').textContent = linkVoto; }
+
+    async function atualizar() {
+      try {
+        const dados = await buscarEspaco(slug);
+        document.title = `Painel — ${dados.nome}`;
+        document.getElementById('cliente').textContent = dados.nome;
+        document.getElementById('plano').textContent = dados.plano;
+        document.getElementById('pergunta').textContent = dados.pergunta;
+        desenharResultados(document.getElementById('barras'), dados);
+        document.getElementById('total').textContent =
+          `${dados.total} de ${dados.limite} votos do plano ${dados.plano} · atualiza a cada 2 segundos`;
+      } catch {
+        document.getElementById('pergunta').textContent = 'Espaço não encontrado';
+      }
+      desenharStatus(document.getElementById('status'));
+    }
+    atualizar();
+    setInterval(atualizar, 2000);
+  </script>
+</body>
+</html>

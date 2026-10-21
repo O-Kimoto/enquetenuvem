@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Votar — EnqueteNuvem</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f54eb'/%3E%3Crect x='8' y='16' width='4' height='8' rx='1' fill='white'/%3E%3Crect x='14' y='10' width='4' height='14' rx='1' fill='white'/%3E%3Crect x='20' y='13' width='4' height='11' rx='1' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="/">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2f54eb"/><rect x="8" y="16" width="4" height="8" rx="1" fill="#fff"/><rect x="14" y="10" width="4" height="14" rx="1" fill="#fff"/><rect x="20" y="13" width="4" height="11" rx="1" fill="#fff"/></svg>
+      EnqueteNuvem
+    </a>
+    <span class="selo" id="cliente">…</span>
+  </header>
+
+  <main class="conteudo" style="max-width:560px">
+    <section class="cartao">
+      <h2 id="pergunta">Carregando…</h2>
+      <div class="opcoes" id="opcoes"></div>
+      <p class="erro" id="erro"></p>
+      <div id="resultado" hidden>
+        <p style="font-weight:700;color:var(--destaque);margin:0 0 8px">✓ Voto registrado na nuvem</p>
+        <div id="barras"></div>
+        <p class="total" id="total"></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const slug = slugDaUrl();
+    const chaveVoto = `votou:${slug}`;
+    const erro = document.getElementById('erro');
+
+    function jaVotou() {
+      try { return localStorage.getItem(chaveVoto) === '1'; } catch { return false; }
+    }
+    function marcarVoto() {
+      try { localStorage.setItem(chaveVoto, '1'); } catch {}
+    }
+
+    function mostrarResultado(dados) {
+      document.getElementById('opcoes').hidden = true;
+      document.getElementById('resultado').hidden = false;
+      desenharResultados(document.getElementById('barras'), dados);
+      document.getElementById('total').textContent = `${dados.total} voto(s) até agora`;
+    }
+
+    async function votar(indice, botoes) {
+      botoes.forEach((b) => (b.disabled = true));
+      erro.textContent = '';
+      try {
+        const r = await fetch(`/api/espacos/${slug}/votos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ indice }),
+        });
+        const dados = await r.json();
+        if (!r.ok) { erro.textContent = dados.erro; botoes.forEach((b) => (b.disabled = false)); return; }
+        marcarVoto();
+        mostrarResultado(dados);
+        setInterval(async () => mostrarResultado(await buscarEspaco(slug)), 3000);
+      } catch {
+        erro.textContent = 'Sem conexão. Tente de novo.';
+        botoes.forEach((b) => (b.disabled = false));
+      }
+    }
+
+    (async () => {
+      try {
+        const dados = await buscarEspaco(slug);
+        document.title = `${dados.pergunta} — ${dados.nome}`;
+        document.getElementById('cliente').textContent = dados.nome;
+        document.getElementById('pergunta').textContent = dados.pergunta;
+        if (jaVotou()) {
+          mostrarResultado(dados);
+          setInterval(async () => mostrarResultado(await buscarEspaco(slug)), 3000);
+          return;
+        }
+        const caixa = document.getElementById('opcoes');
+        const botoes = dados.opcoes.map((o, i) => {
+          const b = document.createElement('button');
+          b.className = 'opcao';
+          b.textContent = o.texto;
+          b.addEventListener('click', () => votar(i, botoes));
+          caixa.appendChild(b);
+          return b;
+        });
+      } catch (e) {
+        document.getElementById('pergunta').textContent = 'Espaço não encontrado';
+        erro.textContent = 'Confira o link ou o QR code.';
+      }
+    })();
+  </script>
+</body>
+</html>
